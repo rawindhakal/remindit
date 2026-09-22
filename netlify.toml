@@ -5,6 +5,7 @@
 [build.environment]
   NODE_VERSION = "20"
   PNPM_FLAGS = "--shamefully-hoist"
+  SECRETS_SCAN_OMIT_KEYS = "VAPID_SUBJECT,NEXT_PUBLIC_VAPID_PUBLIC_KEY"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

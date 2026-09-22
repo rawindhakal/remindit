@@ -7,7 +7,7 @@ import webpush from "web-push";
 async function configureWebPush() {
   const vapidPublicKey = (await getSetting("push.vapid_public_key")) || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const vapidPrivateKey = (await getSetting("push.vapid_private_key")) || process.env.VAPID_PRIVATE_KEY;
-  const vapidSubject = (await getSetting("push.subject")) || process.env.VAPID_SUBJECT || "mailto:support@renewit.app";
+  const vapidSubject = (await getSetting("push.subject")) || process.env.VAPID_SUBJECT || "mailto:admin@example.com";
 
   if (vapidPublicKey && vapidPrivateKey) {
     webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);

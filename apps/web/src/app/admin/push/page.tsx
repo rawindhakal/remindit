@@ -6,7 +6,7 @@ export default function AdminPushSettingsPage() {
   const [enabled, setEnabled] = useState(true);
   const [publicKey, setPublicKey] = useState("");
   const [privateKey, setPrivateKey] = useState("");
-  const [subject, setSubject] = useState("mailto:support@renewit.app");
+  const [subject, setSubject] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -31,7 +31,7 @@ export default function AdminPushSettingsPage() {
           setEnabled(d["push.enabled"]?.value !== "false");
           setPublicKey(d["push.vapid_public_key"]?.value || "");
           setPrivateKey(d["push.vapid_private_key"]?.value || "");
-          setSubject(d["push.subject"]?.value || "mailto:support@renewit.app");
+          setSubject(d["push.subject"]?.value || "");
         }
       })
       .catch(console.error)
@@ -251,7 +251,7 @@ export default function AdminPushSettingsPage() {
             </label>
             <input
               type="text"
-              placeholder="mailto:support@renewit.app"
+              placeholder="mailto:admin@example.com"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-[11px]"
