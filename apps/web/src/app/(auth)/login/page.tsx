@@ -10,9 +10,21 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
+  const urlError = searchParams.get("error");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    if (urlError === "Configuration") {
+      return "Authentication service configuration in progress. Please log in with your email and password.";
+    }
+    if (urlError === "OAuthSignin" || urlError === "OAuthCallbackError") {
+      return "Google sign in is not configured yet. Please log in with your email and password.";
+    }
+    if (urlError) {
+      return `Authentication notice: ${urlError}`;
+    }
+    return null;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
