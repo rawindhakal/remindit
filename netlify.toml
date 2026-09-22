@@ -6,6 +6,7 @@
   NODE_VERSION = "20"
   PNPM_FLAGS = "--shamefully-hoist"
   SECRETS_SCAN_OMIT_KEYS = "VAPID_SUBJECT,NEXT_PUBLIC_VAPID_PUBLIC_KEY"
+  AUTH_TRUST_HOST = "true"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
