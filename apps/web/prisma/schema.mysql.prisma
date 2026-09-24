@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  name            String    @db.VarChar(150)
+  email           String    @unique @db.VarChar(191)
+  passwordHash    String?   @map("password_hash") @db.VarChar(255)
+  timezone        String    @default("Asia/Kathmandu") @db.VarChar(100)
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  status          String    @default("active") @db.VarChar(30)
+  role            String    @default("user") @db.VarChar(30)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  reminders               Reminder[]
+  notificationPreferences NotificationPreference?
+  notificationLogs        NotificationLog[]
+  pushSubscriptions       PushSubscription[]
+  accounts                Account[]
+  sessions                Session[]
+  verificationTokens      VerificationToken[]
+
+  @@map("users")
+}
+
+// ─── NextAuth Tables ─────────────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(uuid()) @db.VarChar(36)
+  userId            String  @map("user_id") @db.VarChar(36)
+  type              String  @db.VarChar(50)
+  provider          String  @db.VarChar(50)
+  providerAccountId String  @map("provider_account_id") @db.VarChar(191)
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String? @db.VarChar(50)
+  scope             String? @db.VarChar(255)
+  id_token          String? @db.Text
+  session_state     String? @db.VarChar(255)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid()) @db.VarChar(36)
+  sessionToken String   @unique @map("session_token") @db.VarChar(191)
+  userId       String   @map("user_id") @db.VarChar(36)
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String   @db.VarChar(191)
+  token      String   @unique @db.VarChar(191)
+  expires    DateTime
+  userId     String?  @map("user_id") @db.VarChar(36)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ─── Password Reset Tokens ───────────────────────────────────────────────────
+
+model PasswordResetToken {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  email     String   @db.VarChar(191)
+  token     String   @unique @db.VarChar(191)
+  expires   DateTime
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("password_reset_tokens")
+}
+
+// ─── Categories ──────────────────────────────────────────────────────────────
+
+model Category {
+  id              String   @id @default(uuid()) @db.VarChar(36)
+  name            String   @db.VarChar(100)
+  slug            String   @unique @db.VarChar(191)
+  icon            String?  @db.VarChar(100)
+  color           String?  @db.VarChar(50)
+  group           String?  @db.VarChar(50)
+  isSystem        Boolean  @default(true) @map("is_system")
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at")
+  defaultSchedule Json     @map("default_schedule")
+
+  reminders Reminder[]
+
+  @@map("categories")
+}
+
+// ─── Reminders ───────────────────────────────────────────────────────────────
+
+model Reminder {
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  userId          String    @map("user_id") @db.VarChar(36)
+  categoryId      String?   @map("category_id") @db.VarChar(36)
+  title           String    @db.VarChar(255)
+  description     String?   @db.Text
+  ownerName       String?   @map("owner_name") @db.VarChar(150)
+  referenceNumber String?   @map("reference_number") @db.VarChar(150)
+  providerName    String?   @map("provider_name") @db.VarChar(255)
+  startDate       DateTime? @map("start_date") @db.Date
+  expiryDate      DateTime  @map("expiry_date") @db.Date
+  status          String    @default("active") @db.VarChar(30)
+  isRecurring     Boolean   @default(false) @map("is_recurring")
+  recurrenceType  String?   @map("recurrence_type") @db.VarChar(30)
+  metadata        Json
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category          Category?           @relation(fields: [categoryId], references: [id])
+  reminderSchedules ReminderSchedule[]
+  notificationLogs  NotificationLog[]
+  renewalHistory    RenewalHistory[]
+
+  @@index([userId, expiryDate], name: "idx_reminders_user_expiry")
+  @@index([expiryDate], name: "idx_reminders_expiry")
+  @@index([userId, status], name: "idx_reminders_user_status")
+  @@map("reminders")
+}
+
+// ─── Reminder Schedules ──────────────────────────────────────────────────────
+
+model ReminderSchedule {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  reminderId String   @map("reminder_id") @db.VarChar(36)
+  daysBefore Int      @map("days_before")
+  channel    String   @default("email") @db.VarChar(30)
+  enabled    Boolean  @default(true)
+  sendTime   String   @default("08:00") @map("send_time") @db.VarChar(10)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  reminder Reminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
+
+  @@unique([reminderId, daysBefore, channel], name: "unique_reminder_schedule")
+  @@map("reminder_schedules")
+}
+
+// ─── Notification Logs ───────────────────────────────────────────────────────
+
+model NotificationLog {
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  userId            String    @map("user_id") @db.VarChar(36)
+  reminderId        String    @map("reminder_id") @db.VarChar(36)
+  notificationType  String    @map("notification_type") @db.VarChar(50)
+  channel           String    @default("email") @db.VarChar(30)
+  scheduledFor      DateTime  @map("scheduled_for")
+  sentAt            DateTime? @map("sent_at")
+  status            String    @default("pending") @db.VarChar(30)
+  providerMessageId String?   @map("provider_message_id") @db.VarChar(255)
+  attemptCount      Int       @default(0) @map("attempt_count")
+  errorMessage      String?   @map("error_message") @db.Text
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  user     User     @relation(fields: [userId], references: [id])
+  reminder Reminder @relation(fields: [reminderId], references: [id])
+
+  @@unique([reminderId, notificationType, scheduledFor], name: "unique_notification")
+  @@index([scheduledFor, status], name: "idx_notification_logs_scheduled")
+  @@map("notification_logs")
+}
+
+// ─── Renewal History ─────────────────────────────────────────────────────────
+
+model RenewalHistory {
+  id                 String   @id @default(uuid()) @db.VarChar(36)
+  reminderId         String   @map("reminder_id") @db.VarChar(36)
+  previousExpiryDate DateTime @map("previous_expiry_date") @db.Date
+  newExpiryDate      DateTime @map("new_expiry_date") @db.Date
+  renewedAt          DateTime @default(now()) @map("renewed_at")
+  notes              String?  @db.Text
+
+  reminder Reminder @relation(fields: [reminderId], references: [id])
+
+  @@map("renewal_history")
+}
+
+// ─── Notification Preferences ─────────────────────────────────────────────────
+
+model NotificationPreference {
+  id                   String   @id @default(uuid()) @db.VarChar(36)
+  userId               String   @unique @map("user_id") @db.VarChar(36)
+  emailEnabled         Boolean  @default(true) @map("email_enabled")
+  pushEnabled          Boolean  @default(true) @map("push_enabled")
+  expiryDayEnabled     Boolean  @default(true) @map("expiry_day_enabled")
+  overdueEnabled       Boolean  @default(false) @map("overdue_enabled")
+  weeklySummaryEnabled Boolean  @default(true) @map("weekly_summary_enabled")
+  summaryDay           Int      @default(1) @map("summary_day")
+  summaryTime          String   @default("08:00") @map("summary_time") @db.VarChar(10)
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+// ─── Push Subscriptions (PWA Web Push) ─────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  userId    String   @map("user_id") @db.VarChar(36)
+  endpoint  String   @unique @db.VarChar(191)
+  p256dh    String   @db.VarChar(255)
+  auth      String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], name: "idx_push_subscriptions_user")
+  @@map("push_subscriptions")
+}
+
+// ─── Super Admin System Settings ──────────────────────────────────────────────
+
+model SystemSetting {
+  key         String   @id @db.VarChar(100)
+  value       String   @db.Text
+  group       String   @db.VarChar(50)
+  description String?  @db.VarChar(255)
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}

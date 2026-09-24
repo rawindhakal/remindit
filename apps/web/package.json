@@ -5,8 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:standalone": "NEXT_STANDALONE=true next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:use-mysql": "cp prisma/schema.mysql.prisma prisma/schema.prisma && prisma generate",
+    "db:use-postgres": "git checkout prisma/schema.prisma && prisma generate",
+    "db:push-mysql": "prisma db push --schema=prisma/schema.mysql.prisma"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
