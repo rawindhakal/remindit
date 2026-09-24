@@ -11,7 +11,8 @@
     "db:generate": "pnpm --filter @renewit/database generate",
     "db:migrate": "pnpm --filter @renewit/database migrate",
     "db:seed": "pnpm --filter @renewit/database seed",
-    "db:studio": "pnpm --filter @renewit/database studio"
+    "db:studio": "pnpm --filter @renewit/database studio",
+    "package:cpanel": "bash scripts/package-cpanel.sh"
   },
   "devDependencies": {
     "turbo": "^2.0.0",

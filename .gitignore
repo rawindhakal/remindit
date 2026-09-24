@@ -13,6 +13,8 @@ node_modules/
 out/
 build/
 dist/
+dist-cpanel/
+cpanel-deploy.zip
 
 # Turbo & caching
 .turbo/
