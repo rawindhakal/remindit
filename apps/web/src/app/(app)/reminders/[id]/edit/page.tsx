@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toInputDate } from "@/lib/utils";
 import { getBikramSambatDate } from "@/lib/nepali-date";
+import { DocumentAttachments } from "@/components/document-attachments";
+import { ScannedDocument } from "@/components/document-scanner-modal";
 
 const SCHEDULE_OPTIONS = [
   { days: 90, label: "90 days before" },
@@ -35,6 +37,8 @@ export default function EditReminderPage({ params }: { params: Promise<{ id: str
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState("yearly");
   const [selectedSchedules, setSelectedSchedules] = useState<number[]>([]);
+  const [documents, setDocuments] = useState<ScannedDocument[]>([]);
+  const [existingMetadata, setExistingMetadata] = useState<any>({});
 
   useEffect(() => {
     fetch(`/api/reminders/${id}`)
@@ -51,6 +55,10 @@ export default function EditReminderPage({ params }: { params: Promise<{ id: str
           setDescription(r.description || "");
           setIsRecurring(r.isRecurring || false);
           setRecurrenceType(r.recurrenceType || "yearly");
+          setExistingMetadata(r.metadata || {});
+          if (r.metadata?.documents && Array.isArray(r.metadata.documents)) {
+            setDocuments(r.metadata.documents);
+          }
           const scheds = r.reminderSchedules
             ? r.reminderSchedules.filter((s: any) => s.enabled).map((s: any) => s.daysBefore)
             : [];
@@ -95,6 +103,7 @@ export default function EditReminderPage({ params }: { params: Promise<{ id: str
           description: description || undefined,
           isRecurring,
           recurrenceType: isRecurring ? recurrenceType : undefined,
+          metadata: { ...existingMetadata, documents },
           schedules: selectedSchedules.map((daysBefore) => ({ daysBefore, enabled: true })),
         }),
       });
@@ -278,6 +287,11 @@ export default function EditReminderPage({ params }: { params: Promise<{ id: str
                 );
               })}
             </div>
+          </div>
+
+          {/* Document Scanner & Attachments */}
+          <div className="pt-4 border-t border-gray-100">
+            <DocumentAttachments documents={documents} onChange={setDocuments} />
           </div>
 
           <div className="pt-6 flex justify-between">

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { DEFAULT_REMINDER_SCHEDULE } from "@/app/api/reminders/constants";
 import { getBikramSambatDate } from "@/lib/nepali-date";
+import { DocumentAttachments } from "@/components/document-attachments";
+import { ScannedDocument } from "@/components/document-scanner-modal";
 
 interface Category {
   id: string;
@@ -48,6 +50,7 @@ export default function NewReminderPage() {
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceType, setRecurrenceType] = useState("yearly");
   const [selectedSchedules, setSelectedSchedules] = useState<number[]>(DEFAULT_REMINDER_SCHEDULE);
+  const [documents, setDocuments] = useState<ScannedDocument[]>([]);
 
   useEffect(() => {
     fetch("/api/categories")
@@ -101,6 +104,7 @@ export default function NewReminderPage() {
           description: description || undefined,
           isRecurring,
           recurrenceType: isRecurring ? recurrenceType : undefined,
+          metadata: { documents },
           schedules: selectedSchedules.map((daysBefore) => ({ daysBefore, enabled: true })),
         }),
       });
@@ -341,6 +345,11 @@ export default function NewReminderPage() {
                   <option value="monthly">Monthly</option>
                 </select>
               )}
+            </div>
+
+            {/* Document Scanner & Attachments */}
+            <div className="pt-3 border-t border-gray-100">
+              <DocumentAttachments documents={documents} onChange={setDocuments} />
             </div>
 
             <div className="pt-4 flex justify-between">

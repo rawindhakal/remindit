@@ -32,3 +32,8 @@ pnpm-debug.log*
 *.tsbuildinfo
 .idea/
 .vscode/
+
+# Uploaded documents
+uploads/
+**/public/uploads/*
+!**/public/uploads/.gitkeep

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatDate, formatDaysRemaining, getStatusConfig, toInputDate, ReminderStatus } from "@/lib/utils";
 import { getBikramSambatDate } from "@/lib/nepali-date";
+import { DocumentAttachments } from "@/components/document-attachments";
 
 interface Category {
   id: string;
@@ -43,6 +44,7 @@ interface Reminder {
   category: Category | null;
   reminderSchedules: ReminderSchedule[];
   renewalHistory: RenewalHistory[];
+  metadata?: any;
 }
 
 export default function ReminderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -305,6 +307,26 @@ export default function ReminderDetailPage({ params }: { params: Promise<{ id: s
             </p>
           </div>
         )}
+      </div>
+
+      {/* Scanned Documents & Attachments */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs">
+        <DocumentAttachments
+          documents={reminder.metadata?.documents || []}
+          onSave={async (updatedDocs) => {
+            await fetch(`/api/reminders/${id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                metadata: {
+                  ...(reminder.metadata || {}),
+                  documents: updatedDocs,
+                },
+              }),
+            });
+            fetchReminder();
+          }}
+        />
       </div>
 
       {/* Reminder Schedule & Notifications */}
