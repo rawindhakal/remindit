@@ -127,6 +127,52 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen> {
     }
   }
 
+  ColorFilter _getColorFilter(ScannerFilter filter) {
+    switch (filter) {
+      case ScannerFilter.magicColor:
+        // Magic Color: High contrast & saturated text
+        return const ColorFilter.matrix([
+          1.3,  0,    0,    0, -15,
+          0,    1.3,  0,    0, -15,
+          0,    0,    1.3,  0, -15,
+          0,    0,    0,    1, 0,
+        ]);
+
+      case ScannerFilter.cleanBw:
+        // Clean B&W: Binarized high-contrast document look
+        return const ColorFilter.matrix([
+          1.8 * 0.299, 1.8 * 0.587, 1.8 * 0.114, 0, -50,
+          1.8 * 0.299, 1.8 * 0.587, 1.8 * 0.114, 0, -50,
+          1.8 * 0.299, 1.8 * 0.587, 1.8 * 0.114, 0, -50,
+          0,           0,           0,           1, 0,
+        ]);
+
+      case ScannerFilter.grayscale:
+        // Smooth monochrome
+        return const ColorFilter.matrix([
+          0.299, 0.587, 0.114, 0, 0,
+          0.299, 0.587, 0.114, 0, 0,
+          0.299, 0.587, 0.114, 0, 0,
+          0,     0,     0,     1, 0,
+        ]);
+
+      case ScannerFilter.lighten:
+        // Brighten shadows
+        return const ColorFilter.matrix([
+          1.15, 0,    0,    0, 30,
+          0,    1.15, 0,    0, 30,
+          0,    0,    1.15, 0, 30,
+          0,    0,    0,    1, 0,
+        ]);
+
+      case ScannerFilter.original:
+        return const ColorFilter.mode(
+          Colors.transparent,
+          BlendMode.dst,
+        );
+    }
+  }
+
   Future<void> _finishScanning() async {
     setState(() => _isProcessing = true);
 
@@ -135,15 +181,16 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen> {
 
       for (int i = 0; i < _pages.length; i++) {
         final page = _pages[i];
-        final processedBytes = await compute(
-          _processInWorker,
-          _ProcessJob(
-            rawBytes: page.originalBytes,
-            cropRect: page.cropRect,
-            rotation: page.rotation,
-            filter: page.filter,
-          ),
+        final job = _ProcessJob(
+          rawBytes: page.originalBytes,
+          cropRect: page.cropRect,
+          rotation: page.rotation,
+          filter: page.filter,
         );
+
+        final processedBytes = kIsWeb
+            ? _processInWorker(job)
+            : await compute(_processInWorker, job);
 
         final fileName = _pages.length > 1
             ? '${widget.documentTitle.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '_')}_page_${i + 1}.jpg'
@@ -344,9 +391,12 @@ class _DocumentScannerScreenState extends State<DocumentScannerScreen> {
                       Center(
                         child: RotatedBox(
                           quarterTurns: _currentPage.rotation ~/ 90,
-                          child: Image.memory(
-                            _currentPage.originalBytes,
-                            fit: BoxFit.contain,
+                          child: ColorFiltered(
+                            colorFilter: _getColorFilter(_currentPage.filter),
+                            child: Image.memory(
+                              _currentPage.originalBytes,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                       ),
