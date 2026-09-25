@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
@@ -8,7 +9,8 @@ import '../models/reminder_model.dart';
 import '../models/dashboard_model.dart';
 
 class ApiService {
-  static const String _defaultBaseUrl = 'https://renewitnp.netlify.app';
+  static String get _defaultBaseUrl =>
+      kDebugMode ? 'http://localhost:3006' : 'https://renewitnp.netlify.app';
   static const String _prefBaseUrlKey = 'vps_base_url';
   static const String _prefTokenKey = 'auth_token';
   static const String _prefUserKey = 'auth_user';
