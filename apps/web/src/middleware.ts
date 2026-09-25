@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(req: NextRequest) {
-  if (req.nextUrl.pathname.startsWith("/api/mobile")) {
+  const { pathname } = req.nextUrl;
+
+  if (pathname.startsWith("/api/mobile") || pathname.startsWith("/uploads")) {
     if (req.method === "OPTIONS") {
       return new NextResponse(null, {
         status: 204,
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods":
-            "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+            "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD",
           "Access-Control-Allow-Headers":
-            "Content-Type, Authorization, Accept, X-Requested-With",
+            "Content-Type, Authorization, Accept, X-Requested-With, Range",
           "Access-Control-Max-Age": "86400",
         },
       });
@@ -20,11 +22,11 @@ export function middleware(req: NextRequest) {
     res.headers.set("Access-Control-Allow-Origin", "*");
     res.headers.set(
       "Access-Control-Allow-Methods",
-      "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+      "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"
     );
     res.headers.set(
       "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, Accept, X-Requested-With"
+      "Content-Type, Authorization, Accept, X-Requested-With, Range"
     );
     return res;
   }
@@ -33,5 +35,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/mobile/:path*"],
+  matcher: ["/api/mobile/:path*", "/uploads/:path*"],
 };

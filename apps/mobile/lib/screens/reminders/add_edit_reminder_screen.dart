@@ -188,9 +188,12 @@ class _AddEditReminderScreenState extends State<AddEditReminderScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
+        child: Material(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
@@ -238,7 +241,8 @@ class _AddEditReminderScreenState extends State<AddEditReminderScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Future<void> _saveReminder() async {

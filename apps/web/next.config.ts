@@ -18,6 +18,14 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/uploads/:path*",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, HEAD, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "*" },
+        ],
+      },
     ];
   },
 };
