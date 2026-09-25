@@ -5,6 +5,7 @@ import '../../models/reminder_model.dart';
 import '../../services/api_service.dart';
 import '../../widgets/document_viewer.dart';
 import '../../widgets/status_badge.dart';
+import '../scanner/document_scanner_screen.dart';
 import 'add_edit_reminder_screen.dart';
 
 class ReminderDetailScreen extends StatefulWidget {
@@ -219,17 +220,38 @@ class _ReminderDetailScreenState extends State<ReminderDetailScreen> {
       );
       if (image == null) return;
 
-      setState(() => _isActionLoading = true);
+      if (!mounted) return;
 
-      final uploaded = await _api.uploadDocument(
-        image,
-        _reminder!.title,
+      // Launch CamScanner editor screen for cropping, rotating, and filters
+      final List<XFile>? scannedFiles = await Navigator.push<List<XFile>>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DocumentScannerScreen(
+            initialImage: image,
+            documentTitle: _reminder!.title,
+          ),
+        ),
       );
 
-      if (uploaded != null) {
-        final currentDocs = List<DocumentAttachment>.from(_reminder!.documents);
-        currentDocs.add(uploaded);
+      if (scannedFiles == null || scannedFiles.isEmpty) return;
 
+      setState(() => _isActionLoading = true);
+
+      final currentDocs = List<DocumentAttachment>.from(_reminder!.documents);
+      int uploadedCount = 0;
+
+      for (final file in scannedFiles) {
+        final uploaded = await _api.uploadDocument(
+          file,
+          _reminder!.title,
+        );
+        if (uploaded != null) {
+          currentDocs.add(uploaded);
+          uploadedCount++;
+        }
+      }
+
+      if (uploadedCount > 0) {
         await _api.updateReminder(widget.reminderId, {
           'documents': currentDocs.map((d) => d.toJson()).toList(),
         });
@@ -238,8 +260,12 @@ class _ReminderDetailScreenState extends State<ReminderDetailScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Document scanned and attached successfully!'),
+            SnackBar(
+              content: Text(
+                uploadedCount == 1
+                    ? 'Document scanned and attached successfully!'
+                    : '$uploadedCount document pages scanned and attached!',
+              ),
               backgroundColor: Colors.green,
             ),
           );

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/category_model.dart';
 import '../../models/reminder_model.dart';
 import '../../services/api_service.dart';
+import '../scanner/document_scanner_screen.dart';
 
 class AddEditReminderScreen extends StatefulWidget {
   final ReminderModel? existingReminder;
@@ -141,35 +142,60 @@ class _AddEditReminderScreenState extends State<AddEditReminderScreen> {
 
       if (image == null) return;
 
-      setState(() => _isUploadingDocument = true);
+      if (!mounted) return;
 
-      final uploaded = await _api.uploadDocument(
-        image,
-        _titleController.text.trim().isNotEmpty
-            ? _titleController.text.trim()
-            : 'scanned_doc',
+      // Launch CamScanner editor screen for cropping, rotating, and filters
+      final List<XFile>? scannedFiles = await Navigator.push<List<XFile>>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DocumentScannerScreen(
+            initialImage: image,
+            documentTitle: _titleController.text.trim().isNotEmpty
+                ? _titleController.text.trim()
+                : 'scanned_doc',
+          ),
+        ),
       );
 
+      if (scannedFiles == null || scannedFiles.isEmpty) return;
+
+      setState(() => _isUploadingDocument = true);
+
+      int uploadedCount = 0;
+      for (final file in scannedFiles) {
+        final uploaded = await _api.uploadDocument(
+          file,
+          _titleController.text.trim().isNotEmpty
+              ? _titleController.text.trim()
+              : 'scanned_doc',
+        );
+        if (uploaded != null) {
+          _documents.add(uploaded);
+          uploadedCount++;
+        }
+      }
+
       if (mounted) {
-        setState(() {
-          _isUploadingDocument = false;
-          if (uploaded != null) {
-            _documents.add(uploaded);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Document uploaded to server successfully!'),
-                backgroundColor: Colors.green,
+        setState(() => _isUploadingDocument = false);
+        if (uploadedCount > 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                uploadedCount == 1
+                    ? 'Document scanned and uploaded successfully!'
+                    : '$uploadedCount document pages scanned and uploaded!',
               ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to upload document to server'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        });
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to upload scanned document to server'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
