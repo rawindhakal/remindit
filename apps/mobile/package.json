@@ -1,0 +1,14 @@
+{
+  "name": "@renewit/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RenewIt Flutter Mobile Application for Android and iOS",
+  "scripts": {
+    "run:android": "flutter run -d android",
+    "run:ios": "flutter run -d ios",
+    "run:macos": "flutter run -d macos",
+    "build:apk": "flutter build apk --release",
+    "build:appbundle": "flutter build appbundle --release",
+    "build:ios": "flutter build ios --release"
+  }
+}
