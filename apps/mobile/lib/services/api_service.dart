@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../models/category_model.dart';
@@ -310,7 +310,7 @@ class ApiService {
 
   // ─── UPLOAD DOCUMENT / CAMERA SCAN ──────────────────────────────────────
 
-  Future<DocumentAttachment?> uploadDocument(File file, [String? customName]) async {
+  Future<DocumentAttachment?> uploadDocument(XFile file, [String? customName]) async {
     final url = Uri.parse('$_baseUrl/api/mobile/upload');
     try {
       final request = http.MultipartRequest('POST', url);
@@ -319,10 +319,18 @@ class ApiService {
         request.fields['name'] = customName;
       }
 
-      final multipartFile = await http.MultipartFile.fromPath('file', file.path);
+      final bytes = await file.readAsBytes();
+      final filename = file.name.isNotEmpty ? file.name : 'scanned_doc.jpg';
+
+      final multipartFile = http.MultipartFile.fromBytes(
+        'file',
+        bytes,
+        filename: filename,
+      );
       request.files.add(multipartFile);
 
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      final streamedResponse =
+          await request.send().timeout(const Duration(seconds: 30));
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode == 200) {
@@ -331,9 +339,7 @@ class ApiService {
           return DocumentAttachment.fromJson(data['data']);
         }
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (_) {}
     return null;
   }
 

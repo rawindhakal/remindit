@@ -56,9 +56,25 @@ export async function POST(req: NextRequest) {
       "image/heic",
       "image/heif",
       "application/pdf",
+      "application/octet-stream",
     ];
 
-    if (file.type && !allowedMimes.includes(file.type.toLowerCase())) {
+    const fileNameLower = (file.name || "").toLowerCase();
+    const hasAllowedExt = [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".webp",
+      ".heic",
+      ".heif",
+      ".pdf",
+    ].some((ext) => fileNameLower.endsWith(ext));
+
+    if (
+      file.type &&
+      !allowedMimes.includes(file.type.toLowerCase()) &&
+      !hasAllowedExt
+    ) {
       return NextResponse.json(
         {
           success: false,

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -223,7 +222,7 @@ class _ReminderDetailScreenState extends State<ReminderDetailScreen> {
       setState(() => _isActionLoading = true);
 
       final uploaded = await _api.uploadDocument(
-        File(image.path),
+        image,
         _reminder!.title,
       );
 

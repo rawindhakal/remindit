@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -145,7 +144,7 @@ class _AddEditReminderScreenState extends State<AddEditReminderScreen> {
       setState(() => _isUploadingDocument = true);
 
       final uploaded = await _api.uploadDocument(
-        File(image.path),
+        image,
         _titleController.text.trim().isNotEmpty
             ? _titleController.text.trim()
             : 'scanned_doc',
